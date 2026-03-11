@@ -1,6 +1,12 @@
 test-name: train-data
 ocr-system: paddleocr
-augmentation: False
+augmentation: True
+augmentation-config:
+    blur:
+        blur_limit: 7
+        p: 1.0
+    brightness:
+        p: 0.5
 
 # draw settings
 draw-process:
@@ -18,6 +24,7 @@ workers: 8
 
 # list of dataset to select
 datasets:
+    x_dataset: y
     cord:
     funsd: y
     gnhk:

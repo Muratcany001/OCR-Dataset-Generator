@@ -14,21 +14,14 @@ class PaddleOCRGenerator(Generator):
         datasets: list,
         dict: list[str] | None,
         workers: int,
-        augmentation: bool
+        augmentation: bool,
+        augmentation_config: dict = None,
     ) -> None:
         super().__init__(
-            test_name,
-            datasets,
-            dict,
-            workers,
-            augmentation
+            test_name, datasets, dict, workers, augmentation, augmentation_config
         )
 
-    def _generate(
-        self,
-        dataloader: Dataloader,
-        task: str
-    ) -> None:
+    def _generate(self, dataloader: Dataloader, task: str) -> None:
         root_path = os.path.join(self.root_path, task)
         os.makedirs(root_path, exist_ok=True)
 
@@ -43,13 +36,13 @@ class PaddleOCRGenerator(Generator):
                     results = [item for sublist in results for item in sublist]
                     results = [f"{path}\t{text}\n" for (path, text) in results]
                 file.writelines(results)
-                
+
     def _det(
         self,
         img_output_path: str,
         img_path: str,
         gt: list,
-        transform: tuple[str, callable] = (None, None)
+        transform: tuple[str, callable] = (None, None),
     ) -> str:
         img = open_image(img_path, transform[1])
         _, img_name = os.path.split(img_path)
@@ -61,12 +54,13 @@ class PaddleOCRGenerator(Generator):
 
         split = Path(img_output_path).parts[-1]
         annotations = []
-        for (text, bbox) in gt:
+        for text, bbox in gt:
             x1, y1, x2, y2 = bbox
-            annotations.append(dict(
-                transcription=text,
-                points = [[x1, y1],[x2, y1],[x2, y2],[x1, y2]]
-            ))
+            annotations.append(
+                dict(
+                    transcription=text, points=[[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
+                )
+            )
 
         return f"{os.path.join('Detection', split, img_name)}\t{json.dumps(annotations, ensure_ascii=False)}\n"
 
@@ -75,7 +69,7 @@ class PaddleOCRGenerator(Generator):
         img_output_path: str,
         img_path: str,
         gt: list,
-        transform: tuple[str, callable] = (None, None)
+        transform: tuple[str, callable] = (None, None),
     ) -> list[tuple[str, str]]:
         img = open_image(img_path, transform[1])
         _, img_name = os.path.split(img_path)
@@ -83,13 +77,13 @@ class PaddleOCRGenerator(Generator):
         split = Path(img_output_path).parts[-1]
         result = []
         for i, (text, bbox) in enumerate(gt):
-            crop = img[bbox[1]:bbox[3], bbox[0]:bbox[2]]
+            crop = img[bbox[1] : bbox[3], bbox[0] : bbox[2]]
             if transform[0] is not None:
                 crop_name = img_name.replace(".", f"-{i}-{transform[0]}.")
             else:
                 crop_name = img_name.replace(".", f"-{i}.")
-                
+
             cv2.imwrite(os.path.join(img_output_path, crop_name), crop)
             result.append((os.path.join("Recognition", split, crop_name), text))
-        
+
         return result
