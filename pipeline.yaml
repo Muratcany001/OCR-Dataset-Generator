@@ -24,7 +24,7 @@ workers: 8
 
 # list of dataset to select
 datasets:
-    x_dataset: y
+    TLT_3060_Faz1_Dataset: y
     cord:
     funsd: y
     gnhk:
